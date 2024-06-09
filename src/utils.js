@@ -1,47 +1,24 @@
-import pako from 'pako';
+const bytesB64 = "c3RlYWx0aF9wbmdjb21wAAAOuB+LCACyx2VmAv99U9tq20AQ/RWxzyVYtkOjvhWHlkIIpXkpVGVZ746kJXtR92LXhPx7Z3dlRwKnL5LmzJwzV72Qe/DcyTFIa8inirRR3G0EPvnH/Xvf5ENFnmwXjsxB4jzaA6jP3wocHc/gU2B7BdW97LroUbz6+VA1u936y6bZpsivYMCxlLYKUmdKXd9sb+vs3VmtwYSEvrRkdFaPoUWrJe1UyVTW/ywUaokPMPpEXd8lcwDZD1mqXq23CTlKEYY54DlTkIDbZEXDrRH0AtY3qwTzrqcOLuiqoB5ATGXm5IZ6pkcFuYA655cCqIB97ClOzSl2Sq6OKQ+ZYKUHTDaAiEUZMZzSAYqggp7xEz1sKPwNYMSC7KADB4YDlaazTufppkDHeABBdVRBjkX21+8lwwd892G4ElRacKWYZwpYmKMMSchhqtSFMwrOKgPhojQf1ptXWwEquUxUKvnEyTAtOQ0DjnOwSkjTL7q6FkBHwDMzQZ6n3zTNu7FaJuhtgedd6UUarymyl9CzHGla9B6UPVIve81my1bWMRpTU8d8VH7eVnZyhQJXnJHPj8TBn4izpOE0Thv/nu99+kPgR/FP5yx7g6scmB/OGq/k9R/4r7lsxwMAAA==";
 
-class DataWriter {
-    constructor() {
-        this.data = [];
+function base64ToBits(base64) {
+    let binaryString = atob(base64);
+    let bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
     }
 
-    writeBit(bit) {
-        this.data.push(bit);
-    }
-
-    writeNBits(bits) {
-        for (let bit of bits) {
-            this.writeBit(bit);
-        }
-    }
-
-    writeByte(byte) {
+    const bits = [];
+    bytes.forEach(byte => {
         for (let i = 7; i >= 0; i--) {
-            this.writeBit((byte >> i) & 1);
+            bits.push((byte >> i) & 1);
         }
-    }
-
-    writeNBytes(bytes) {
-        for (let byte of bytes) {
-            this.writeByte(byte);
-        }
-    }
-
-    writeInt32(value) {
-        let buffer = new ArrayBuffer(4);
-        let view = new DataView(buffer);
-        view.setInt32(0, value, false);
-        for (let i = 0; i < 4; i++) {
-            this.writeByte(view.getUint8(i));
-        }
-    }
-
-    getData() {
-        return this.data;
-    }
+    });
+    return bits;
 }
 
-export async function embedStealthExif(imgSrc, text) {
+const bits = base64ToBits(bytesB64);
+
+export async function embedStealthExif(imgSrc) {
     let canvas = document.createElement('canvas');
     let ctx = canvas.getContext('2d', { willReadFrequently: true, alpha: true });
     let img = new Image();
@@ -54,16 +31,8 @@ export async function embedStealthExif(imgSrc, text) {
     ctx.drawImage(img, 0, 0);
 
     let imageData = ctx.getImageData(0, 0, img.width, img.height);
-    let dataWriter = new DataWriter();
 
-    const magic = "stealth_pngcomp";
-    dataWriter.writeNBytes(magic.split('').map(c => c.charCodeAt(0)));
-
-    const compressedText = pako.gzip(text);
-    dataWriter.writeInt32(compressedText.length * 8); // data length in bits
-    dataWriter.writeNBytes(new Uint8Array(compressedText));
-
-    let bits = dataWriter.getData();
+    // Get bits here...
     let bitIndex = 0;
 
     for (let x = 0; x < img.width; x++) {
@@ -82,5 +51,5 @@ export async function embedStealthExif(imgSrc, text) {
     }
 
     ctx.putImageData(imageData, 0, 0);
-    return canvas.toDataURL(); // 返回嵌入水印后的图片数据URL
+    return canvas.toDataURL();
 }
