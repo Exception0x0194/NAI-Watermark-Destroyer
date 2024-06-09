@@ -13,7 +13,7 @@ import ImageZipper from './components/ImageZipper.vue'
   </p>
   <div class="my-4 pt-4">
     <a class="inline-block text-sm text-gray-500"
-      href="https://github.com/Exception0x0194/nai-metadata-editor">GitHub</a>
+      href="https://github.com/Exception0x0194/NAI-Watermark-Destroyer">GitHub</a>
     <br />
   </div>
 </template>
