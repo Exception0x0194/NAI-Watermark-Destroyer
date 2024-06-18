@@ -1,4 +1,6 @@
-const bytesB64 = "c3RlYWx0aF9wbmdjb21wAAAOuB+LCACyx2VmAv99U9tq20AQ/RWxzyVYtkOjvhWHlkIIpXkpVGVZ746kJXtR92LXhPx7Z3dlRwKnL5LmzJwzV72Qe/DcyTFIa8inirRR3G0EPvnH/Xvf5ENFnmwXjsxB4jzaA6jP3wocHc/gU2B7BdW97LroUbz6+VA1u936y6bZpsivYMCxlLYKUmdKXd9sb+vs3VmtwYSEvrRkdFaPoUWrJe1UyVTW/ywUaokPMPpEXd8lcwDZD1mqXq23CTlKEYY54DlTkIDbZEXDrRH0AtY3qwTzrqcOLuiqoB5ATGXm5IZ6pkcFuYA655cCqIB97ClOzSl2Sq6OKQ+ZYKUHTDaAiEUZMZzSAYqggp7xEz1sKPwNYMSC7KADB4YDlaazTufppkDHeABBdVRBjkX21+8lwwd892G4ElRacKWYZwpYmKMMSchhqtSFMwrOKgPhojQf1ptXWwEquUxUKvnEyTAtOQ0DjnOwSkjTL7q6FkBHwDMzQZ6n3zTNu7FaJuhtgedd6UUarymyl9CzHGla9B6UPVIve81my1bWMRpTU8d8VH7eVnZyhQJXnJHPj8TBn4izpOE0Thv/nu99+kPgR/FP5yx7g6scmB/OGq/k9R/4r7lsxwMAAA==";
+const bytesB64List = [
+    "c3RlYWx0aF9wbmdjb21wAAAOuB+LCACyx2VmAv99U9tq20AQ/RWxzyVYtkOjvhWHlkIIpXkpVGVZ746kJXtR92LXhPx7Z3dlRwKnL5LmzJwzV72Qe/DcyTFIa8inirRR3G0EPvnH/Xvf5ENFnmwXjsxB4jzaA6jP3wocHc/gU2B7BdW97LroUbz6+VA1u936y6bZpsivYMCxlLYKUmdKXd9sb+vs3VmtwYSEvrRkdFaPoUWrJe1UyVTW/ywUaokPMPpEXd8lcwDZD1mqXq23CTlKEYY54DlTkIDbZEXDrRH0AtY3qwTzrqcOLuiqoB5ATGXm5IZ6pkcFuYA655cCqIB97ClOzSl2Sq6OKQ+ZYKUHTDaAiEUZMZzSAYqggp7xEz1sKPwNYMSC7KADB4YDlaazTufppkDHeABBdVRBjkX21+8lwwd892G4ElRacKWYZwpYmKMMSchhqtSFMwrOKgPhojQf1ptXWwEquUxUKvnEyTAtOQ0DjnOwSkjTL7q6FkBHwDMzQZ6n3zTNu7FaJuhtgedd6UUarymyl9CzHGla9B6UPVIve81my1bWMRpTU8d8VH7eVnZyhQJXnJHPj8TBn4izpOE0Thv/nu99+kPgR/FP5yx7g6scmB/OGq/k9R/4r7lsxwMAAA==",
+    "c3RlYWx0aF9wbmdjb21wAAAOuB+LCADyNHFmAv99U9tq20AQ/RWxzyVYtkOjvhWHlkIIpXkpVGVZ746kJXtR92LXhPx7Z3dlRwKnL5LmzJwzV72Qe/DcyTFIa8inirRR3G0EPvnm43vf5ENFnmwXjsxB4jzaA6jP3wocHc/gU2B7BdW97LroUbz6+VA1u936y6bZpsivYMCxlLYKUmdKXd9sb+vs3VmtwYSEvrRkdFaPoUWrJe1UyVTW/ywUaokPMPpEXd8lcwDZD1mqXq23CTlKEYY54DlTkIDbZEXDrRH0AtY3qwTzrqcOLuiqoB5ATGXm5IZ6pkcFuYA655cCqIB97ClOzSl2Sq6OKQ+ZYKUHTDaAiEUZMZzSAYqggp7xEz1sKPwNYMSC7KADB4YDlaazTufppkDHeABBdVRBjkX21+8lwwd892G4ElRacKWYZwpYmKMMSchhqtSFMwrOKgPhojQf1ptXWwEquUxUKvnEyTAtOQ0DjnOwSkjTL7q6FkBHwDMzQZ6n3zTNu7FaJuhtgedd6UUarymyl9CzHGla9B6UPVIve81my1bWMRpTU8d8VH7eVnZyhQJXnJHPj8TBn4izpOE0Thv/nu99+kPgR/FP5yx7g6scmB/OGq/k9R8P4ot/xwMAAA=="];
 
 function base64ToBits(base64) {
     let binaryString = atob(base64);
@@ -16,9 +18,15 @@ function base64ToBits(base64) {
     return bits;
 }
 
-const bits = base64ToBits(bytesB64);
+function getRandomBase64String(bytesB64List, probability) {
+    const randomValue = Math.random();
+    return randomValue < probability ? bytesB64List[0] : bytesB64List[1];
+}
 
-export async function embedStealthExif(imgSrc) {
+export async function embedStealthExif(imgSrc, probability = 0.8) {
+    const selectedBase64 = getRandomBase64String(bytesB64List, probability);
+    const bits = base64ToBits(selectedBase64);
+
     let canvas = document.createElement('canvas');
     let ctx = canvas.getContext('2d', { willReadFrequently: true, alpha: true });
     let img = new Image();
