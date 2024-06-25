@@ -8,7 +8,6 @@
         <div class="el-upload__text">拖动文件到这里或者<em>点击选择文件</em></div>
       </el-upload>
     </div>
-    <!-- <button @click="triggerFileInput">添加文件</button> -->
     <el-button @click="clearFiles">清空文件</el-button>
     <el-button @click="downloadZip">打包下载</el-button>
 
@@ -64,6 +63,8 @@ async function handleUpload(file) {
 };
 
 const downloadZip = async () => {
+  if (files.value.length == 0 || isLoading) return;
+
   isLoading.value = true;
   progress.value = 0;
   const zip = new JSZip();
