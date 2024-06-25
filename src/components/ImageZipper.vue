@@ -63,7 +63,20 @@ async function handleUpload(file) {
 };
 
 const downloadZip = async () => {
-  if (files.value.length == 0 || isLoading.value) return;
+  if (files.value.length == 0) {
+    ElMessage({
+      message: "没有需要处理的文件。",
+      type: "warning"
+    })
+    return;
+  }
+  if (isLoading.value) {
+    ElMessage({
+      message: "正在处理图片，请勿重复操作。",
+      type: "error"
+    });
+    return;
+  }
 
   isLoading.value = true;
   progress.value = 0;
