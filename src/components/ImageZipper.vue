@@ -63,7 +63,7 @@ async function handleUpload(file) {
 };
 
 const downloadZip = async () => {
-  if (files.value.length == 0 || isLoading) return;
+  if (files.value.length == 0 || isLoading.value) return;
 
   isLoading.value = true;
   progress.value = 0;
