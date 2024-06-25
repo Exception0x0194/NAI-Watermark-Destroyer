@@ -2,9 +2,15 @@
 <template>
   <div>
     <input type="file" @change="handleFiles" multiple accept="image/png" ref="fileInput" style="display: none;" />
-    <button @click="triggerFileInput">添加文件</button>
-    <button @click="clearFiles">清空文件</button>
-    <button @click="downloadZip">打包下载</button>
+    <div class="max-w-740px" style="margin: 0 auto">
+      <el-upload class="image-uploader" drag multiple :before-upload="handleUpload">
+        <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+        <div class="el-upload__text">拖动文件到这里或者<em>点击选择文件</em></div>
+      </el-upload>
+    </div>
+    <!-- <button @click="triggerFileInput">添加文件</button> -->
+    <el-button @click="clearFiles">清空文件</el-button>
+    <el-button @click="downloadZip">打包下载</el-button>
 
     <p>待处理文件数量：{{ files.length }}</p>
 
@@ -18,6 +24,8 @@
 import { ref } from 'vue';
 import JSZip from 'jszip';
 import { embedStealthExif } from '../utils.js';
+import { ElMessage } from "element-plus";
+import { UploadFilled } from "@element-plus/icons-vue";
 
 const availableImgExt = ["png"];
 const files = ref<File[]>([]);
@@ -38,6 +46,21 @@ const handleFiles = (event: Event) => {
     });
     files.value.push(...newFiles);  // Append new valid image files to the array
   }
+};
+
+async function handleUpload(file) {
+  console.log(file);
+
+  let fileExt = file.name.split(".").pop().toLowerCase();
+  if (availableImgExt.indexOf(fileExt) != -1) {
+    files.value.push(file);
+  } else {
+    ElMessage({
+      message: file.name + " 不是一个支持的 PNG 文件。",
+      type: "error",
+    });
+  }
+  return false;
 };
 
 const downloadZip = async () => {
@@ -79,8 +102,6 @@ const downloadZip = async () => {
     isLoading.value = false;
   });
 };
-
-
 
 const clearFiles = () => {
   files.value = [];  // Clear the files array
