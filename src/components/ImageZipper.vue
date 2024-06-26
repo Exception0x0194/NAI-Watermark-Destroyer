@@ -8,8 +8,8 @@
         <div class="el-upload__text">拖动文件到这里或者<em>点击选择文件</em></div>
       </el-upload>
     </div>
-    <el-button @click="clearFiles">清空文件</el-button>
-    <el-button @click="downloadZip">打包下载</el-button>
+    <el-button @click="clearFiles" :icon="Delete">清空文件</el-button>
+    <el-button @click="downloadZip" :icon="Download">打包下载</el-button>
 
     <p>待处理文件数量：{{ files.length }}</p>
 
@@ -24,7 +24,7 @@ import { ref } from 'vue';
 import JSZip from 'jszip';
 import { embedStealthExif } from '../utils.js';
 import { ElMessage } from "element-plus";
-import { UploadFilled } from "@element-plus/icons-vue";
+import { Delete, Download, UploadFilled } from "@element-plus/icons-vue";
 
 const availableImgExt = ["png"];
 const files = ref<File[]>([]);
