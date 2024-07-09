@@ -21,10 +21,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import JSZip from 'jszip';
-import { embedStealthExif } from '../utils.js';
+import { ZipWriter, BlobReader } from '@zip.js/zip.js';
+import { createWriteStream } from 'streamsaver';
 import { ElMessage } from "element-plus";
 import { Delete, Download, UploadFilled } from "@element-plus/icons-vue";
+
+import { embedStealthExif } from '../utils.js';
 
 const availableImgExt = ["png", "webp", "bmp"];
 const files = ref<File[]>([]);
@@ -48,8 +50,6 @@ const handleFiles = (event: Event) => {
 };
 
 async function handleUpload(file) {
-  console.log(file);
-
   let fileExt = file.name.split(".").pop().toLowerCase();
   if (availableImgExt.indexOf(fileExt) != -1) {
     files.value.push(file);
@@ -80,9 +80,19 @@ const downloadZip = async () => {
 
   isLoading.value = true;
   progress.value = 0;
-  const zip = new JSZip();
-
   const totalFiles = files.value.length;
+
+  // 创建 ZIP 文件的写入流
+  const fileStream = createWriteStream("images_with_watermark.zip");
+  const writer = fileStream.getWriter();
+  const zipWriter = new ZipWriter(new WritableStream({
+    write(chunk) {
+      return writer.write(chunk);
+    },
+    close() {
+      writer.close();
+    }
+  }));
 
   for (let index = 0; index < files.value.length; index++) {
     const file = files.value[index];
@@ -99,7 +109,7 @@ const downloadZip = async () => {
       const blob = new Blob([watermarkedBytes], { type: file.type });  // 假设输出文件类型与输入一致
 
       // 添加处理过的文件到zip
-      zip.file("👻-" + file.name, blob, { binary: true });
+      await zipWriter.add("👻-" + file.name, new BlobReader(blob));
 
       // 更新进度
       progress.value = ((index + 1) / totalFiles) * 100;
@@ -108,14 +118,7 @@ const downloadZip = async () => {
     }
   }
 
-  // 生成 ZIP 并触发下载
-  const content = await zip.generateAsync({ type: 'blob' });
-  const url = URL.createObjectURL(content);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'images_with_watermarks.zip';
-  a.click();
-  URL.revokeObjectURL(url);  // 清理下载链接
+  await zipWriter.close();
   isLoading.value = false;
 };
 
