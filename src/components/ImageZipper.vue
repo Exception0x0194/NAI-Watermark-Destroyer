@@ -24,6 +24,7 @@ import { ref } from 'vue';
 import { ZipWriter, BlobReader } from '@zip.js/zip.js';
 import { createWriteStream } from 'streamsaver';
 import { ElMessage } from "element-plus";
+import pLimit from "p-limit";
 import { Delete, Download, UploadFilled } from "@element-plus/icons-vue";
 
 import { embedStealthExif } from '../utils.js';
@@ -33,10 +34,6 @@ const files = ref<File[]>([]);
 const fileInput = ref<null | HTMLInputElement>(null);
 const isLoading = ref(false);
 const progress = ref(0);
-
-const triggerFileInput = () => {
-  fileInput.value?.click();
-};
 
 const handleFiles = (event: Event) => {
   const input = event.target as HTMLInputElement;
@@ -81,6 +78,9 @@ const downloadZip = async () => {
   isLoading.value = true;
   progress.value = 0;
   const totalFiles = files.value.length;
+  let processedFiles = 0;
+
+  const limit = pLimit(10);
 
   // 创建 ZIP 文件的写入流
   const fileStream = createWriteStream("images_with_watermark.zip");
@@ -94,8 +94,7 @@ const downloadZip = async () => {
     }
   }));
 
-  for (let index = 0; index < files.value.length; index++) {
-    const file = files.value[index];
+  const promises = files.value.map(file => limit(async () => {
     try {
       const arrayBuffer = await new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -106,17 +105,20 @@ const downloadZip = async () => {
 
       // 调用 WebAssembly 模块处理图像
       const watermarkedBytes = await embedStealthExif(new Uint8Array(arrayBuffer));
-      const blob = new Blob([watermarkedBytes], { type: file.type });  // 假设输出文件类型与输入一致
+      const blob = new Blob([watermarkedBytes], { type: file.type });
 
       // 添加处理过的文件到zip
       await zipWriter.add("👻-" + file.name, new BlobReader(blob));
 
       // 更新进度
-      progress.value = ((index + 1) / totalFiles) * 100;
+      processedFiles++;
+      progress.value = (processedFiles / totalFiles) * 100;
     } catch (error) {
       console.error('Error processing file:', file.name, error);
     }
-  }
+  }));
+
+  await Promise.all(promises);
 
   await zipWriter.close();
   isLoading.value = false;

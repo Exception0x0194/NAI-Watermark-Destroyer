@@ -12,6 +12,7 @@
     "@element-plus/icons-vue": "^2.3.1",
     "@zip.js/zip.js": "^2.7.45",
     "element-plus": "^2.7.6",
+    "p-limit": "^6.1.0",
     "stealth-watermark-editor": "^0.1.0",
     "streamsaver": "^2.0.6",
     "vite-plugin-top-level-await": "^1.4.1",
