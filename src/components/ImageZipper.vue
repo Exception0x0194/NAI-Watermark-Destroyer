@@ -26,7 +26,7 @@ import { embedStealthExif } from '../utils.js';
 import { ElMessage } from "element-plus";
 import { Delete, Download, UploadFilled } from "@element-plus/icons-vue";
 
-const availableImgExt = ["png"];
+const availableImgExt = ["png", "webp", "bmp"];
 const files = ref<File[]>([]);
 const fileInput = ref<null | HTMLInputElement>(null);
 const isLoading = ref(false);
@@ -55,7 +55,7 @@ async function handleUpload(file) {
     files.value.push(file);
   } else {
     ElMessage({
-      message: file.name + " 不是一个支持的 PNG 文件。",
+      message: file.name + " 不是一个支持的图片文件。",
       type: "error",
     });
   }
@@ -83,38 +83,40 @@ const downloadZip = async () => {
   const zip = new JSZip();
 
   const totalFiles = files.value.length;
-  let processedFiles = 0;
 
-  for (let file of files.value) {
-    // 更新进度
-    progress.value = (processedFiles / totalFiles) * 100;
+  for (let index = 0; index < files.value.length; index++) {
+    const file = files.value[index];
+    try {
+      const arrayBuffer = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsArrayBuffer(file);
+      });
 
-    let reader = new FileReader();
-    const readAsDataURL = (file) => new Promise((resolve, reject) => {
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(file);
-    });
+      // 调用 WebAssembly 模块处理图像
+      const watermarkedBytes = await embedStealthExif(new Uint8Array(arrayBuffer));
+      const blob = new Blob([watermarkedBytes], { type: file.type });  // 假设输出文件类型与输入一致
 
-    const imgSrc = await readAsDataURL(file);
-    const watermarkedImage = await embedStealthExif(imgSrc);
-    const base64Response = await fetch(watermarkedImage);
-    const blob = await base64Response.blob();
-    zip.file("👻-" + file.name, blob, { binary: true });
+      // 添加处理过的文件到zip
+      zip.file("👻-" + file.name, blob, { binary: true });
 
-    processedFiles++;
-    progress.value = (processedFiles / totalFiles) * 100;
+      // 更新进度
+      progress.value = ((index + 1) / totalFiles) * 100;
+    } catch (error) {
+      console.error('Error processing file:', file.name, error);
+    }
   }
 
-  zip.generateAsync({ type: 'blob' }).then((content) => {
-    const url = URL.createObjectURL(content);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'images_with_watermarks.zip';
-    a.click();
-    URL.revokeObjectURL(url);  // Cleanup after download
-    isLoading.value = false;
-  });
+  // 生成 ZIP 并触发下载
+  const content = await zip.generateAsync({ type: 'blob' });
+  const url = URL.createObjectURL(content);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'images_with_watermarks.zip';
+  a.click();
+  URL.revokeObjectURL(url);  // 清理下载链接
+  isLoading.value = false;
 };
 
 const clearFiles = () => {
