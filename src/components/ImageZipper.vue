@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { ZipWriter, BlobReader } from '@zip.js/zip.js';
+import { ZipWriter, Uint8ArrayReader } from '@zip.js/zip.js';
 import { createWriteStream } from 'streamsaver';
 import { ElMessage } from "element-plus";
 import pLimit from "p-limit";
@@ -105,10 +105,9 @@ const downloadZip = async () => {
 
       // 调用 WebAssembly 模块处理图像
       const watermarkedBytes = await embedStealthExif(new Uint8Array(arrayBuffer));
-      const blob = new Blob([watermarkedBytes], { type: file.type });
 
       // 添加处理过的文件到zip
-      await zipWriter.add("👻-" + file.name, new BlobReader(blob));
+      await zipWriter.add("👻-" + file.name, new Uint8ArrayReader(watermarkedBytes));
 
       // 更新进度
       processedFiles++;
